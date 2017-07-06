@@ -46,7 +46,7 @@ class OutgoingInterface(object):
 
     def getEntryById(self, query):
         c = self.openConnection()
-        result = c.cursor().execute(dbQuery(query).generateQuery())
+        result = c.cursor().execute(query)
         self.closeConnection(c)
         return result
 
@@ -91,6 +91,7 @@ class OutgoingInterface(object):
 
     def getPlayersByRoom(self, roomID):
         pass
+
 
 class IncomingInterface(OutgoingInterface):
     """
