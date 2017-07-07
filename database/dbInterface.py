@@ -3,6 +3,7 @@ These are the interfaces that will be used
 in order to interact with the database
 """
 import sqlite3
+import json
 
 
 def dict_factory(cursor, row):
@@ -10,6 +11,23 @@ def dict_factory(cursor, row):
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
     return d
+
+
+def fillDbFromJSON(jsonFile, dbFile):
+    cardsDict = json.loads(open(jsonFile).read())
+
+    blackCards = [(x['text'], x['pick']) for x in cardsDict["blackCards"]]
+    whiteCards = [(x,) for x in cardsDict["whiteCards"]]
+
+    conn = sqlite3.connect(dbFile)
+    # this is where the proverbial magic happens
+    c = conn.cursor()
+
+    c.executemany("INSERT INTO whiteCards (cardText) VALUES (?)", whiteCards)
+    c.executemany("INSERT INTO blackCards (cardText, pick) VALUES (?, ?)", blackCards)
+
+    conn.commit()
+    conn.close()
 
 
 class dbQuery(object):
@@ -46,30 +64,30 @@ class OutgoingInterface(object):
 
     def getEntryById(self, query):
         c = self.openConnection()
-        result = c.cursor().execute(query)
+        result = c.cursor().execute(str(query))
         self.closeConnection(c)
         return result
 
     def getAllEntries(self, tableName):
         c = self.openConnection()
-        result = c.cursor().execute("SELECT * FROM "+tableName)
+        result = [x for x in c.cursor().execute("SELECT * FROM "+tableName)]
         self.closeConnection(c)
         return result
 
     def getAllBlackCards(self):
-        pass
+        return self.getAllEntries('blackCards')
 
     def getBlackCardById(self, cardID):
         pass
 
     def getAllWhiteCards(self):
-        pass
+        return self.getAllEntries('whiteCards')
 
     def getWhiteCardByID(self, cardID):
         pass
 
     def getAllUsers(self):
-        pass
+        return self.getAllEntries('users')
 
     def getUserById(self, userID):
         pass
@@ -87,7 +105,7 @@ class OutgoingInterface(object):
         pass
 
     def getAllRooms(self):
-        pass
+        return self.getAllEntries('rooms')
 
     def getPlayersByRoom(self, roomID):
         pass
